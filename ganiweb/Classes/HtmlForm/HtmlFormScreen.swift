@@ -1,18 +1,31 @@
-import UIKit
+
 import Eureka
 import SwiftyJSON
+import SVProgressHUD
+
 import GaniLib
 
 open class HtmlFormScreen: GFormScreen {
     public private(set) var htmlForm: HtmlForm!
     private var refreshControl: UIRefreshControl!
     public var formURL: URL!
+    public private(set) var section: Section!
     
     open override func viewDidLoad() {
         super.viewDidLoad()
         
         appendRefreshControl()
-//        self.tableView?.contentInset = UIEdgeInsetsMake(-36, 0, -36, 0)
+        setupForm()
+    }
+    
+    private func setupForm() {
+        self.tableView?.contentInset = UIEdgeInsetsMake(-36, 0, -36, 0)
+        self.section = Section()
+        
+        // section.header!.height = {0}
+        // section.header = headerForm(title: "HEADER", height: 150)
+        
+        form += [section]
     }
     
     private func appendRefreshControl() {
@@ -54,20 +67,29 @@ open class HtmlFormScreen: GFormScreen {
 //    }
     
     
+    //@objc public func loadForm() {
     @objc public func loadForm() {
         self.htmlForm = HtmlForm(formURL: formURL.absoluteString, form: form, onSubmitSucceeded: { result in
-            self.onSubmitSucceeded(result: result)
+            if !self.onSubmitted(result: result) {
+                if let message = result["message"].string {
+                    SVProgressHUD.showError(withStatus: message)
+                }
+                else if let message = result["error"].string {  // Devise uses "error" key
+                    SVProgressHUD.showError(withStatus: message)
+                }
+            }
         })
         htmlForm.load(onSuccess: {
-            self.onLoad()
+            self.onLoaded()
         })
     }
     
-    open func onLoad() {
+    open func onLoaded() {
         // To be overidden
     }
     
-    open func onSubmitSucceeded(result: JSON) {
+    open func onSubmitted(result: JSON) -> Bool {
         // To be overidden
+        return true
     }
 }
