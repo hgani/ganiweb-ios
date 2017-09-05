@@ -154,14 +154,15 @@ public class HtmlForm {
     
     public func unwrappedValues() -> [String: Any] {
         let wrapped = form.values(includeHidden: true)
-        var unwrapped = [String:Any]()
-        
-        for (k,v) in wrapped {
+//        var unwrapped = [String: Any]()
+        var unwrapped = GParams()
+                
+        for (k, v) in wrapped {
             if let rowValue = self.form.rowBy(tag: k)?.baseValue as? KeyValue {
                 unwrapped[k] = rowValue.value
             }
             else {
-                unwrapped[k] = v ?? nil
+                unwrapped[k] = v
             }
         }
         
@@ -237,11 +238,13 @@ public class HtmlForm {
                         urlRow(input, name: name, label: label)
                         break
                     case "hidden":
-                        let hiddenFields = formElement?.css("input[name=\(name)]")
-                    
-                        if hiddenFields?.count == 1 {
-                            hiddenRow(input, name: name)
-                        }
+                        // NOTE: Not sure what this is for
+//                        let hiddenFields = formElement?.css("input[name=\(name)]")
+//                    
+//                        if hiddenFields?.count == 1 {
+//                            hiddenRow(input, name: name)
+//                        }
+                        hiddenRow(input, name: name)
                         break
                     case "radio":
                         if (self.form.rowBy(tag: name) != nil) {
@@ -537,11 +540,21 @@ public class HtmlForm {
         
         if let inputRow: HTMLTextRow = form.rowBy(tag: name) {
             if input.toHTML != inputRow.html! {
+                // Index will be nil if the field was previously also a hidden field.
+                if let index = section.index(of: inputRow) {
+                    replaceSection(row: hiddenRow, at: index)
+                }
+                else {
+                    inputRow.html  = hiddenRow.html
+                    inputRow.value = hiddenRow.value
+                    inputRow.updateCell()
+                }
+
                 // Since hidden row not present in section
                 // just update the value
-                inputRow.html  = hiddenRow.html
-                inputRow.value = hiddenRow.value
-                inputRow.updateCell()
+//                inputRow.html  = hiddenRow.html
+//                inputRow.value = hiddenRow.value
+//                inputRow.updateCell()
                 
 //                print(name)
 //                print(inputRow.value)
@@ -658,34 +671,27 @@ public class HtmlForm {
         if let path = formAction {
             SVProgressHUD.show()
             
-            Alamofire.request("\(GHttp.instance.host())\(path).json",
-                method: .post,
-                parameters: unwrappedValues(),
-                headers: headers()).responseString { response in
-                    switch response.result {
-                    case .success(let value):
-                        let json = JSON(parseJSON: value)
-                        
-                        SVProgressHUD.dismiss()
-                        self.onSubmitSucceeded(json)
-
-//                        if let token = json["csrf_token"].string {
-//                            SVProgressHUD.dismiss()
-//                            
-//                            Session.instance.csrfToken = token
-//                            
-//                            self.launch.screen(PortfolioScreen(), animated: true)
-//                        }
-//                        else {
-//                            if let error = json["error"].string {
-//                                SVProgressHUD.showError(withStatus: error)
-//                            }
-//                        }
-                    //                        }
-                    case .failure(let error):
-                        SVProgressHUD.showError(withStatus: error.localizedDescription)
-                    }
+            Rest.post(path: "/\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
+                SVProgressHUD.dismiss()
+                self.onSubmitSucceeded(json)
+                return true
             }
+            
+//            Alamofire.request("\(GHttp.instance.host())\(path).json",
+//                method: .post,
+//                parameters: unwrappedValues(),
+//                headers: headers()).responseString { response in
+//                    switch response.result {
+//                    case .success(let value):
+//                        let json = JSON(parseJSON: value)
+//                        
+//                        SVProgressHUD.dismiss()
+//                        self.onSubmitSucceeded(json)
+//                    }
+//                    case .failure(let error):
+//                        SVProgressHUD.showError(withStatus: error.localizedDescription)
+//                    }
+//            }
         }
     }
 }
