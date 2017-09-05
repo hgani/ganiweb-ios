@@ -152,7 +152,7 @@ public class HtmlForm {
         }
     }
     
-    public func unwrappedValues() -> [String: Any] {
+    public func unwrappedValues() -> GParams {
         let wrapped = form.values(includeHidden: true)
 //        var unwrapped = [String: Any]()
         var unwrapped = GParams()
