@@ -1,7 +1,11 @@
 import Eureka
 //import ImageRow
 
-public final class HTMLTextAreaRow: _TextAreaRow, RowType {
+protocol HtmlFormRow {
+    var html: String? { get }
+}
+
+public final class HTMLTextAreaRow: _TextAreaRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -9,7 +13,7 @@ public final class HTMLTextAreaRow: _TextAreaRow, RowType {
     }
 }
 
-public final class HTMLPushRow<T: Equatable>: _PushRow<PushSelectorCell<T>>, RowType {
+public final class HTMLPushRow<T: Equatable>: _PushRow<PushSelectorCell<T>>, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -17,7 +21,7 @@ public final class HTMLPushRow<T: Equatable>: _PushRow<PushSelectorCell<T>>, Row
     }
 }
 
-public final class HTMLTextRow: _TextRow, RowType {
+public final class HTMLTextRow: _TextRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -25,7 +29,7 @@ public final class HTMLTextRow: _TextRow, RowType {
     }
 }
 
-public final class HTMLDateRow: _DateRow, RowType {
+public final class HTMLDateRow: _DateRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -34,7 +38,7 @@ public final class HTMLDateRow: _DateRow, RowType {
 }
 
 
-public final class HTMLTimeRow: _TimeRow, RowType {
+public final class HTMLTimeRow: _TimeRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -42,7 +46,7 @@ public final class HTMLTimeRow: _TimeRow, RowType {
     }
 }
 
-public final class HTMLDateTimeRow: _DateTimeRow, RowType {
+public final class HTMLDateTimeRow: _DateTimeRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -50,7 +54,7 @@ public final class HTMLDateTimeRow: _DateTimeRow, RowType {
     }
 }
 
-public final class HTMLEmailRow: _EmailRow, RowType {
+public final class HTMLEmailRow: _EmailRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -58,7 +62,7 @@ public final class HTMLEmailRow: _EmailRow, RowType {
     }
 }
 
-public final class HTMLPasswordRow: _PasswordRow, RowType {
+public final class HTMLPasswordRow: _PasswordRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -66,7 +70,7 @@ public final class HTMLPasswordRow: _PasswordRow, RowType {
     }
 }
 
-public final class HTMLURLRow: _URLRow, RowType {
+public final class HTMLURLRow: _URLRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -75,7 +79,7 @@ public final class HTMLURLRow: _URLRow, RowType {
 }
 
 public final class HTMLMultipleSelectorRow<T: Hashable>:
-    _MultipleSelectorRow<T, PushSelectorCell<Set<T>>>, RowType {
+    _MultipleSelectorRow<T, PushSelectorCell<Set<T>>>, RowType, HtmlFormRow {
     var html: String?
     
     public required init(tag: String?) {
@@ -83,7 +87,7 @@ public final class HTMLMultipleSelectorRow<T: Hashable>:
     }
 }
 
-public final class HTMLSwitchRow: _SwitchRow, RowType {
+public final class HTMLSwitchRow: _SwitchRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -91,7 +95,7 @@ public final class HTMLSwitchRow: _SwitchRow, RowType {
     }
 }
 
-public final class HTMLPhoneRow: _PhoneRow, RowType {
+public final class HTMLPhoneRow: _PhoneRow, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {
@@ -99,7 +103,7 @@ public final class HTMLPhoneRow: _PhoneRow, RowType {
     }
 }
 
-public final class HTMLButtonRowOf<T: Equatable>: _ButtonRowOf<T>, RowType {
+public final class HTMLButtonRowOf<T: Equatable>: _ButtonRowOf<T>, RowType, HtmlFormRow {
     var html: String?
     
     required public init(tag: String?) {

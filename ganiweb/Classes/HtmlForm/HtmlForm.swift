@@ -8,7 +8,8 @@ import SVProgressHUD
 import SwiftyJSON
 
 public class HtmlForm {
-    let formURL: String
+//    let formURL: String
+    let path: String
     let form: Form
     
     var section: Section!
@@ -20,8 +21,10 @@ public class HtmlForm {
     
     public private(set) var rendered = false
     
-    init(formURL: String, form: Form, onSubmitSucceeded: @escaping ((JSON)->Void)) {
-        self.formURL = formURL
+//    init(formURL: String, form: Form, onSubmitSucceeded: @escaping ((JSON)->Void)) {
+    init(path: String, form: Form, onSubmitSucceeded: @escaping ((JSON)->Void)) {
+//        self.formURL = formURL
+        self.path = path
         self.form = form
         self.onSubmitSucceeded = onSubmitSucceeded
     }
@@ -108,48 +111,89 @@ public class HtmlForm {
         ]
     }
     
-    public func load(onSuccess: (()->Void)? = nil) {
-        SVProgressHUD.show()
-        
-        let urlRequest = URLRequest(url: URL(string: formURL)!)
+    private func populateFromCache() {
+        let urlRequest = URLRequest(url: URL(string: "\(GHttp.instance.host())\(path)")!)
         if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
             let htmlString = String(data: cachedResponse.data, encoding: .utf8)
             let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
             processDocument(doc: docCached!)
         }
+    }
+    
+    public func load(indicator: ProgressIndicator, onSuccess: (()->Void)? = nil) {
+//        SVProgressHUD.show()
         
-        NSLog("URL: \(formURL)")
+        populateFromCache()
         
-        Alamofire.request(formURL).responseString { response in
-//            self.delegate?.onComplete()
+        Http.get(path: path).execute(indicator: indicator) { content in
+            if let doc = Kanna.HTML(html: content, encoding: .utf8) {
+                self.processDocument(doc: doc)
+                onSuccess?()
+                return nil
+            }
+            return "Invalid content"
             
-            if self.responseStatusSuccess(response: response)
-                && response.result.isSuccess {
-                
-                SVProgressHUD.dismiss()
-                
-                if let html = response.result.value {
-                    if let doc = Kanna.HTML(html: html, encoding: .utf8) {
-                        self.processDocument(doc: doc)
-                        onSuccess?()
-                    }
-                }
-            }
-            else {
-                if (response.error != nil) {
-                    SVProgressHUD.showError(withStatus: response.error!.localizedDescription)
-                }
-                else {
-                    if (response.response!.statusCode == 500) {
-                        SVProgressHUD.showError(withStatus: "Server encountered an error. Please try again.")
-                    }
-                    else {
-                        SVProgressHUD.dismiss()
-                    }
-                    
-                }
-            }
+//            if self.responseStatusSuccess(response: response)
+//                && response.result.isSuccess {
+//                
+////                SVProgressHUD.dismiss()
+//                
+//                if let html = response.result.value {
+//                    if let doc = Kanna.HTML(html: html, encoding: .utf8) {
+//                        self.processDocument(doc: doc)
+//                        onSuccess?()
+//                    }
+//                }
+//                
+//                return true
+//            }
+//            return false
+//            else {
+//                if (response.error != nil) {
+//                    SVProgressHUD.showError(withStatus: response.error!.localizedDescription)
+//                }
+//                else {
+//                    if (response.response!.statusCode == 500) {
+//                        SVProgressHUD.showError(withStatus: "Server encountered an error. Please try again.")
+//                    }
+//                    else {
+//                        SVProgressHUD.dismiss()
+//                    }
+//                    
+//                }
+//            }
         }
+        
+//        Alamofire.request(formURL).responseString { response in
+////            self.delegate?.onComplete()
+//            
+//            if self.responseStatusSuccess(response: response)
+//                && response.result.isSuccess {
+//                
+//                SVProgressHUD.dismiss()
+//                
+//                if let html = response.result.value {
+//                    if let doc = Kanna.HTML(html: html, encoding: .utf8) {
+//                        self.processDocument(doc: doc)
+//                        onSuccess?()
+//                    }
+//                }
+//            }
+//            else {
+//                if (response.error != nil) {
+//                    SVProgressHUD.showError(withStatus: response.error!.localizedDescription)
+//                }
+//                else {
+//                    if (response.response!.statusCode == 500) {
+//                        SVProgressHUD.showError(withStatus: "Server encountered an error. Please try again.")
+//                    }
+//                    else {
+//                        SVProgressHUD.dismiss()
+//                    }
+//                    
+//                }
+//            }
+//        }
     }
     
     public func unwrappedValues() -> GParams {
@@ -169,19 +213,19 @@ public class HtmlForm {
         return unwrapped
     }
     
-    public func clearFields(_ tableView: UITableView) {
-        let section = form.allSections.last
-        section?.removeAll()
-        
-        let urlRequest = URLRequest(url: URL(string: formURL)!)
-        if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
-            let htmlString = String(data: cachedResponse.data, encoding: .utf8)
-            let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
-            processDocument(doc: docCached!)
-        }
-        
-        tableView.reloadData()
-    }
+//    public func clearFields(_ tableView: UITableView) {
+//        let section = form.allSections.last
+//        section?.removeAll()
+//        
+//        let urlRequest = URLRequest(url: URL(string: formURL)!)
+//        if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
+//            let htmlString = String(data: cachedResponse.data, encoding: .utf8)
+//            let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
+//            processDocument(doc: docCached!)
+//        }
+//        
+//        tableView.reloadData()
+//    }
     
     private func processDocument(doc: HTMLDocument) {
         self.rendered = true
@@ -318,6 +362,20 @@ public class HtmlForm {
         section.insert(row, at: at)
     }
     
+    // TODO: Apply every row type to use this.
+    private func insertOrReplaceRow(_ row: BaseRow, tag: String) {
+        //if let inputRow: HTMLTextAreaRow = form.rowBy(tag: name) {
+        if let inputRow = form.rowBy(tag: tag) {
+            if (row as? HtmlFormRow)?.html != (inputRow as? HtmlFormRow)?.html! {
+                let index = section.index(of: inputRow)
+                replaceSection(row: row, at: index)
+            }
+        }
+        else {
+            section <<< row
+        }
+    }
+    
     private func textAreaRow(_ input: XMLElement, name: String) {
         let textAreaRow = HTMLTextAreaRow(name) { row in
             var value = input.text
@@ -331,15 +389,17 @@ public class HtmlForm {
             row.value       = value
         }
         
-        if let inputRow: HTMLTextAreaRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: textAreaRow, at: index)
-            }
-        }
-        else {
-            section <<< textAreaRow
-        }
+        //if let inputRow: HTMLTextAreaRow = form.rowBy(tag: name) {
+//        if let inputRow = form.rowBy(tag: name) {
+//            if input.toHTML != (inputRow as? HtmlFormRow)?.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: textAreaRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< textAreaRow
+//        }
+        insertOrReplaceRow(textAreaRow, tag: name)
     }
     
     private func textRow(_ input: XMLElement, name: String, label: String) {
@@ -349,15 +409,16 @@ public class HtmlForm {
             row.title = label
         }
         
-        if let inputRow: HTMLTextRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: textRow, at: index)
-            }
-        }
-        else {
-            section <<< textRow
-        }
+//        if let inputRow = form.rowBy(tag: name) {
+//            if input.toHTML != (inputRow as? HtmlFormRow)?.html!! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: textRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< textRow
+//        }
+        insertOrReplaceRow(textRow, tag: name)
     }
     
     private func dateTimeRow(_ input: XMLElement, name: String, label: String) {

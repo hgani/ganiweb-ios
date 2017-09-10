@@ -7,19 +7,26 @@ import GaniLib
 
 open class HtmlFormScreen: GFormScreen {
     public private(set) var htmlForm: HtmlForm!
-    private var refreshControl: UIRefreshControl!
-    public var formURL: URL!
+//    private var refreshControl: UIRefreshControl!
+//    public var formURL: URL!
     public private(set) var section: Section!
+    lazy fileprivate var refresher: GRefreshControl = {
+        return GRefreshControl().onValueChanged {
+            self.onRefresh()
+        }
+    }()
     
     open override func viewDidLoad() {
         super.viewDidLoad()
         
         appendRefreshControl()
         setupForm()
+        
+        onRefresh()
     }
     
     private func setupForm() {
-        self.tableView?.contentInset = UIEdgeInsetsMake(-36, 0, -36, 0)
+        self.tableView?.contentInset = UIEdgeInsetsMake(-36, 0, -36, 0)  // Eureka-specific requirements
         self.section = Section()
         
         // section.header!.height = {0}
@@ -29,16 +36,24 @@ open class HtmlFormScreen: GFormScreen {
     }
     
     private func appendRefreshControl() {
-        self.refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self,
-                                 action: #selector(loadForm),
-                                 for: UIControlEvents.valueChanged)
-        self.tableView?.addSubview(refreshControl)
+        tableView?.addSubview(refresher)
         
-        refreshControl.snp.makeConstraints { (make) -> Void in
+        // Eureka-specific requirements
+        refresher.snp.makeConstraints { (make) -> Void in
             make.top.equalTo(4)
             make.centerX.equalTo(tableView!)
         }
+
+//        self.refreshControl = UIRefreshControl()
+//        refreshControl.addTarget(self,
+//                                 action: #selector(loadForm),
+//                                 for: UIControlEvents.valueChanged)
+//        self.tableView?.addSubview(refreshControl)
+//        
+//        refreshControl.snp.makeConstraints { (make) -> Void in
+//            make.top.equalTo(4)
+//            make.centerX.equalTo(tableView!)
+//        }
     }
     
 //    
@@ -68,8 +83,9 @@ open class HtmlFormScreen: GFormScreen {
     
     
     //@objc public func loadForm() {
-    @objc public func loadForm() {
-        self.htmlForm = HtmlForm(formURL: formURL.absoluteString, form: form, onSubmitSucceeded: { result in
+    public func loadForm(path: String) {
+        //self.htmlForm = HtmlForm(formURL: formURL.absoluteString, form: form, onSubmitSucceeded: { result in
+        self.htmlForm = HtmlForm(path: path, form: form, onSubmitSucceeded: { result in
             if !self.onSubmitted(result: result) {
                 if let message = result["message"].string {
                     SVProgressHUD.showError(withStatus: message)
@@ -79,7 +95,10 @@ open class HtmlFormScreen: GFormScreen {
                 }
             }
         })
-        htmlForm.load(onSuccess: {
+        htmlForm.load(indicator: refresher, onSuccess: {
+            // Allow subclass to populate header/footer, i.e. when htmlForm has been rendered.
+            // E.g. `if !self.htmlForm.rendered { return }`
+            self.section.reload()
             self.onLoaded()
         })
     }
