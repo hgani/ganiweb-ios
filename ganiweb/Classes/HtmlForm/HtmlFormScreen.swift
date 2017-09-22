@@ -1,23 +1,30 @@
 
 import Eureka
-import SwiftyJSON
 import SVProgressHUD
-
 import GaniLib
 
 open class HtmlFormScreen: GFormScreen {
     public private(set) var htmlForm: HtmlForm!
-//    private var refreshControl: UIRefreshControl!
-//    public var formURL: URL!
     public private(set) var section: Section!
     lazy fileprivate var refresher: GRefreshControl = {
         return GRefreshControl().onValueChanged {
             self.onRefresh()
         }
     }()
-    
+
     open override func viewDidLoad() {
         super.viewDidLoad()
+        
+        _ = self.leftBarButton(item: GBarButtonItem()
+            .title("Cancel")
+            .onClick {
+            self.launch.confirm("Changes will be discarded. Are you sure?", title: nil, handler: {
+                // https://stackoverflow.com/questions/39576314/dealloc-a-viewcontroller-warning
+                DispatchQueue.main.async {
+                    _ = self.nav.pop()
+                }
+            })
+        })
         
         appendRefreshControl()
         setupForm()
@@ -43,17 +50,6 @@ open class HtmlFormScreen: GFormScreen {
             make.top.equalTo(4)
             make.centerX.equalTo(tableView!)
         }
-
-//        self.refreshControl = UIRefreshControl()
-//        refreshControl.addTarget(self,
-//                                 action: #selector(loadForm),
-//                                 for: UIControlEvents.valueChanged)
-//        self.tableView?.addSubview(refreshControl)
-//        
-//        refreshControl.snp.makeConstraints { (make) -> Void in
-//            make.top.equalTo(4)
-//            make.centerX.equalTo(tableView!)
-//        }
     }
     
 //    
@@ -107,7 +103,7 @@ open class HtmlFormScreen: GFormScreen {
         // To be overidden
     }
     
-    open func onSubmitted(result: JSON) -> Bool {
+    open func onSubmitted(result: Json) -> Bool {
         // To be overidden
         return true
     }

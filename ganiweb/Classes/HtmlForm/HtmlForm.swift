@@ -121,8 +121,6 @@ public class HtmlForm {
     }
     
     public func load(indicator: ProgressIndicator, onSuccess: (()->Void)? = nil) {
-//        SVProgressHUD.show()
-        
         populateFromCache()
         
         Http.get(path: path).execute(indicator: indicator) { content in
@@ -713,7 +711,6 @@ public class HtmlForm {
             row.html    = input.toHTML
             row.title   = input["value"] ?? ""
         }.onCellSelection { (cell, row) in
-//            self.delegate?.onSubmit(htmlForm: self)
             self.submit()
         }
         
@@ -732,27 +729,11 @@ public class HtmlForm {
         if let path = formAction {
             SVProgressHUD.show()
             
-            Rest.post(path: "/\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
+            Rest.post(path: "\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
                 SVProgressHUD.dismiss()
                 self.onSubmitSucceeded(json)
                 return true
             }
-            
-//            Alamofire.request("\(GHttp.instance.host())\(path).json",
-//                method: .post,
-//                parameters: unwrappedValues(),
-//                headers: headers()).responseString { response in
-//                    switch response.result {
-//                    case .success(let value):
-//                        let json = JSON(parseJSON: value)
-//                        
-//                        SVProgressHUD.dismiss()
-//                        self.onSubmitSucceeded(json)
-//                    }
-//                    case .failure(let error):
-//                        SVProgressHUD.showError(withStatus: error.localizedDescription)
-//                    }
-//            }
         }
     }
 }
