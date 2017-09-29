@@ -8,23 +8,19 @@ import SVProgressHUD
 import SwiftyJSON
 
 public class HtmlForm {
-//    let formURL: String
-    let path: String
+//    let path: String
     let form: Form
     
     var section: Section!
     private var formAction: String!
     var document: HTMLDocument!
-//    var delegate: HTMLFormOnSubmitDelegate?
     
     private let onSubmitSucceeded: ((JSON)->Void)
     
     public private(set) var rendered = false
     
-//    init(formURL: String, form: Form, onSubmitSucceeded: @escaping ((JSON)->Void)) {
-    init(path: String, form: Form, onSubmitSucceeded: @escaping ((JSON)->Void)) {
-//        self.formURL = formURL
-        self.path = path
+    init(form: Form, onSubmitSucceeded: @escaping ((JSON)->Void)) {
+//        self.path = path
         self.form = form
         self.onSubmitSucceeded = onSubmitSucceeded
     }
@@ -111,7 +107,7 @@ public class HtmlForm {
         ]
     }
     
-    private func populateFromCache() {
+    private func populateFromCache(path: String) {
         let urlRequest = URLRequest(url: URL(string: "\(GHttp.instance.host())\(path)")!)
         if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
             let htmlString = String(data: cachedResponse.data, encoding: .utf8)
@@ -120,8 +116,8 @@ public class HtmlForm {
         }
     }
     
-    public func load(indicator: ProgressIndicator, onSuccess: (()->Void)? = nil) {
-        populateFromCache()
+    public func load(_ path: String, indicator: ProgressIndicator, onSuccess: (()->Void)? = nil) {
+        populateFromCache(path: path)
         
         Http.get(path: path).execute(indicator: indicator) { content in
             if let doc = Kanna.HTML(html: content, encoding: .utf8) {

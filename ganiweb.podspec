@@ -46,8 +46,7 @@ Simplify iOS development
   s.dependency 'Alamofire'
 	s.dependency 'Kanna'
   s.dependency 'SwiftyJSON'
-  #s.dependency 'SVProgressHUD'
-  s.dependency 'Eureka'
+  #s.dependency 'Eureka'
 	#s.dependency 'ImageRow'
   s.dependency 'Turbolinks'
 end

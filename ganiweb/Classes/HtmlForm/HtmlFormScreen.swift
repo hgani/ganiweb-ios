@@ -28,8 +28,6 @@ open class HtmlFormScreen: GFormScreen {
         
         appendRefreshControl()
         setupForm()
-        
-        onRefresh()
     }
     
     private func setupForm() {
@@ -40,6 +38,17 @@ open class HtmlFormScreen: GFormScreen {
         // section.header = headerForm(title: "HEADER", height: 150)
         
         form += [section]
+        
+        self.htmlForm = HtmlForm(form: form, onSubmitSucceeded: { result in
+            if !self.onSubmitted(result: result) {
+                if let message = result["message"].string {
+                    SVProgressHUD.showError(withStatus: message)
+                }
+                else if let message = result["error"].string {  // Devise uses "error" key
+                    SVProgressHUD.showError(withStatus: message)
+                }
+            }
+        })
     }
     
     private func appendRefreshControl() {
@@ -78,20 +87,8 @@ open class HtmlFormScreen: GFormScreen {
 //    }
     
     
-    //@objc public func loadForm() {
     public func loadForm(path: String) {
-        //self.htmlForm = HtmlForm(formURL: formURL.absoluteString, form: form, onSubmitSucceeded: { result in
-        self.htmlForm = HtmlForm(path: path, form: form, onSubmitSucceeded: { result in
-            if !self.onSubmitted(result: result) {
-                if let message = result["message"].string {
-                    SVProgressHUD.showError(withStatus: message)
-                }
-                else if let message = result["error"].string {  // Devise uses "error" key
-                    SVProgressHUD.showError(withStatus: message)
-                }
-            }
-        })
-        htmlForm.load(indicator: refresher, onSuccess: {
+        htmlForm.load(path, indicator: refresher, onSuccess: {
             // Allow subclass to populate header/footer, i.e. when htmlForm has been rendered.
             // E.g. `if !self.htmlForm.rendered { return }`
             self.section.reload()

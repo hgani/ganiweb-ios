@@ -2,7 +2,7 @@ import UIKit
 import Turbolinks
 import GaniLib
 
-open class TurbolinksScreen: Turbolinks.VisitableViewController, ScreenProtocol {
+open class TurbolinksScreen: Turbolinks.VisitableViewController {
     public var helper : ScreenHelper!
     public var nav : NavHelper!
     
@@ -28,6 +28,18 @@ open class TurbolinksScreen: Turbolinks.VisitableViewController, ScreenProtocol 
     public func rightBarButton(item: GBarButtonItem) -> Self {
         self.navigationItem.rightBarButtonItem = item
         return self
+    }
+    
+//    open func onRefresh() {
+//        // To be overridden
+//    }
+}
+
+extension TurbolinksScreen: ScreenProtocol {
+    public var controller: UIViewController {
+        get {
+            return self
+        }
     }
     
     open func onRefresh() {
