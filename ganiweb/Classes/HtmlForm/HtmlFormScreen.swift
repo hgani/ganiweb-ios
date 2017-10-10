@@ -31,7 +31,7 @@ open class HtmlFormScreen: GFormScreen {
     }
     
     private func setupForm() {
-        self.tableView?.contentInset = UIEdgeInsetsMake(-36, 0, -36, 0)  // Eureka-specific requirements
+        self.tableView?.contentInset = UIEdgeInsetsMake(-16, 0, -16, 0)  // Eureka-specific requirements
         self.section = Section()
         
         // section.header!.height = {0}

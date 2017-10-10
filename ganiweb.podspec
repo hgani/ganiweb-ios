@@ -43,10 +43,8 @@ Simplify iOS development
   # s.frameworks = 'UIKit', 'MapKit'
 	
   s.dependency 'GaniLib'
-  s.dependency 'Alamofire'
 	s.dependency 'Kanna'
-  s.dependency 'SwiftyJSON'
-  #s.dependency 'Eureka'
-	#s.dependency 'ImageRow'
+  #s.dependency 'ImageRow', '~> 2.0'
+  s.dependency 'ImageRow'
   s.dependency 'Turbolinks'
 end

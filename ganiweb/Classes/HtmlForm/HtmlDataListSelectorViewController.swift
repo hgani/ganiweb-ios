@@ -1,37 +1,42 @@
 import UIKit
 import Eureka
 
-class HtmlDataListSelectorViewController<T:Equatable>: _SelectorViewController<ListCheckRow<T>> {
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        appendTextRow()
-    }
-    
-    private func appendTextRow() {
-        let section = form.allSections.first!
-        let row = TextRow() { row in
-                row.title = "Other (Please specify)"
-            }.cellSetup { (cell, row) in
-                if let options = self.row.dataProvider?.arrayData {
-                    for option in options {
-                        if self.row.value == option {
-                            return
-                        }
-                    }
-                    
-                    row.value = self.row.value as! String?
-                }
-            }.cellUpdate { (_, row) in
-                let changed = self.row.value != ((row.value ?? "") as! T)
-                if row.value != nil && changed {
-                    self.row.value = (row.value as! T)
-                    self.onDismissCallback?(self)
-                }
-            }
-        
-        section <<< row
-    }
+open class HtmlDataListSelectorViewController<OptionsRow: OptionsProviderRow>: SelectorViewController<OptionsRow> where String == OptionsRow.OptionsProviderType.Option {
+
+
+
+// T:Equatable,
+//public class HtmlDataListSelectorViewController<OptionsRow: OptionsProviderRow>: _SelectorViewController<ListCheckRow<String>, OptionsRow> where String == OptionsRow.OptionsProviderType.Option {
+//    override func viewDidLoad() {
+//        super.viewDidLoad()
+//
+////        appendTextRow()
+//    }
+//
+//    private func appendTextRow() {
+//        let section = form.allSections.first!
+//        let row = TextRow() { row in
+//                row.title = "Other (Please specify)"
+//            }.cellSetup { (cell, row) in
+//                if let options = self.row.dataProvider?.arrayData {
+//                    for option in options {
+//                        if self.row.value == option {
+//                            return
+//                        }
+//                    }
+//
+//                    row.value = self.row.value as! String?
+//                }
+//            }.cellUpdate { (_, row) in
+//                let changed = self.row.value != ((row.value ?? "") as! T)
+//                if row.value != nil && changed {
+//                    self.row.value = (row.value as! T)
+//                    self.onDismissCallback?(self)
+//                }
+//            }
+//
+//        section <<< row
+//    }
 }
 
 //class HTMLSelectorRowViewController: UITableViewController {
