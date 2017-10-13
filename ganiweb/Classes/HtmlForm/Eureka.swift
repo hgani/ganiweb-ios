@@ -1,5 +1,4 @@
 import Eureka
-//import ImageRow
 
 protocol HtmlFormRow {
     var html: String? { get }
@@ -111,16 +110,6 @@ public final class HTMLButtonRowOf<T: Equatable>: _ButtonRowOf<T>, RowType, Html
     }
 }
 public typealias HTMLButtonRow = HTMLButtonRowOf<String>
-
-/*
-public final class HTMLImageRow: _ImageRow<PushSelectorCell<UIImage>>, RowType {
-    var html: String?
-    
-    public required init(tag: String?) {
-        super.init(tag: tag)
-    }
-}
-*/
 
 public final class AACCheckCell: Cell<Bool>, CellType {
     

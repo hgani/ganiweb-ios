@@ -1,14 +1,12 @@
 import GaniLib
 
 import Eureka
-//import ImageRow
 import Alamofire
 import Kanna
 import SVProgressHUD
 import SwiftyJSON
 
 public class HtmlForm {
-//    let path: String
     let form: Form
     
     var section: Section!
@@ -20,7 +18,6 @@ public class HtmlForm {
     public private(set) var rendered = false
     
     init(form: Form, onSubmitSucceeded: @escaping ((JSON)->Void)) {
-//        self.path = path
         self.form = form
         self.onSubmitSucceeded = onSubmitSucceeded
     }
@@ -126,73 +123,11 @@ public class HtmlForm {
                 return nil
             }
             return "Invalid content"
-            
-//            if self.responseStatusSuccess(response: response)
-//                && response.result.isSuccess {
-//                
-////                SVProgressHUD.dismiss()
-//                
-//                if let html = response.result.value {
-//                    if let doc = Kanna.HTML(html: html, encoding: .utf8) {
-//                        self.processDocument(doc: doc)
-//                        onSuccess?()
-//                    }
-//                }
-//                
-//                return true
-//            }
-//            return false
-//            else {
-//                if (response.error != nil) {
-//                    SVProgressHUD.showError(withStatus: response.error!.localizedDescription)
-//                }
-//                else {
-//                    if (response.response!.statusCode == 500) {
-//                        SVProgressHUD.showError(withStatus: "Server encountered an error. Please try again.")
-//                    }
-//                    else {
-//                        SVProgressHUD.dismiss()
-//                    }
-//                    
-//                }
-//            }
         }
-        
-//        Alamofire.request(formURL).responseString { response in
-////            self.delegate?.onComplete()
-//            
-//            if self.responseStatusSuccess(response: response)
-//                && response.result.isSuccess {
-//                
-//                SVProgressHUD.dismiss()
-//                
-//                if let html = response.result.value {
-//                    if let doc = Kanna.HTML(html: html, encoding: .utf8) {
-//                        self.processDocument(doc: doc)
-//                        onSuccess?()
-//                    }
-//                }
-//            }
-//            else {
-//                if (response.error != nil) {
-//                    SVProgressHUD.showError(withStatus: response.error!.localizedDescription)
-//                }
-//                else {
-//                    if (response.response!.statusCode == 500) {
-//                        SVProgressHUD.showError(withStatus: "Server encountered an error. Please try again.")
-//                    }
-//                    else {
-//                        SVProgressHUD.dismiss()
-//                    }
-//                    
-//                }
-//            }
-//        }
     }
     
     public func unwrappedValues() -> GParams {
         let wrapped = form.values(includeHidden: true)
-//        var unwrapped = [String: Any]()
         var unwrapped = GParams()
                 
         for (k, v) in wrapped {
@@ -382,17 +317,6 @@ public class HtmlForm {
             row.placeholder = input["placeholder"] ?? ""
             row.value       = value
         }
-        
-        //if let inputRow: HTMLTextAreaRow = form.rowBy(tag: name) {
-//        if let inputRow = form.rowBy(tag: name) {
-//            if input.toHTML != (inputRow as? HtmlFormRow)?.html! {
-//                let index = section.index(of: inputRow)
-//                replaceSection(row: textAreaRow, at: index)
-//            }
-//        }
-//        else {
-//            section <<< textAreaRow
-//        }
         insertOrReplaceRow(textAreaRow, tag: name)
     }
     
@@ -402,16 +326,6 @@ public class HtmlForm {
             row.value = input["value"] ?? ""
             row.title = label
         }
-        
-//        if let inputRow = form.rowBy(tag: name) {
-//            if input.toHTML != (inputRow as? HtmlFormRow)?.html!! {
-//                let index = section.index(of: inputRow)
-//                replaceSection(row: textRow, at: index)
-//            }
-//        }
-//        else {
-//            section <<< textRow
-//        }
         insertOrReplaceRow(textRow, tag: name)
     }
     
@@ -514,14 +428,14 @@ public class HtmlForm {
     }
     
     private func dataListRow(_ input: XMLElement, name: String, label: String, options: [String]) {
-        let dataListRow = HtmlDataListRow<String>(name) { row in
+        let dataListRow = HtmlDataListRow(name) { row in
             row.html    = input.toHTML
             row.title   = label
             row.options = options
             row.value   = options.first
         }
         
-        if let inputRow: HtmlDataListRow<String> = form.rowBy(tag: name) {
+        if let inputRow: HtmlDataListRow = form.rowBy(tag: name) {
             if input.toHTML != inputRow.html! {
                 let index = section.index(of: inputRow)
                 replaceSection(row: dataListRow, at: index)
@@ -604,16 +518,6 @@ public class HtmlForm {
                     inputRow.value = hiddenRow.value
                     inputRow.updateCell()
                 }
-
-                // Since hidden row not present in section
-                // just update the value
-//                inputRow.html  = hiddenRow.html
-//                inputRow.value = hiddenRow.value
-//                inputRow.updateCell()
-                
-//                print(name)
-//                print(inputRow.value)
-//                print(form.values(includeHidden: true))
             }
         }
         else {
@@ -682,15 +586,16 @@ public class HtmlForm {
     }
     
     private func imageRow(_ input: XMLElement, name: String, label: String) {
-        /* TODO: Fix
-        let imageRow = HTMLImageRow(name) { row in
+        #if INCLUDE_IMAGEROW
+
+        let imageRow = HtmlImageRow(name) { row in
             row.html        = input.toHTML
             row.title       = label
             row.sourceTypes = [.PhotoLibrary, .Camera, .SavedPhotosAlbum]
             row.clearAction = .yes(style: UIAlertActionStyle.destructive)
         }
         
-        if let inputRow: HTMLImageRow = form.rowBy(tag: name) {
+        if let inputRow: HtmlImageRow = form.rowBy(tag: name) {
             if input.toHTML != inputRow.html! {
                 let index = section.index(of: inputRow)
                 replaceSection(row: imageRow, at: index)
@@ -699,7 +604,8 @@ public class HtmlForm {
         else {
             section <<< imageRow
         }
- */
+        
+        #endif
     }
     
     private func submitButtonRow(_ input: XMLElement, name: String) {
@@ -725,7 +631,7 @@ public class HtmlForm {
         if let path = formAction {
             SVProgressHUD.show()
             
-            Rest.post(path: "\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
+            _ = Rest.post(path: "\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
                 SVProgressHUD.dismiss()
                 self.onSubmitSucceeded(json)
                 return true

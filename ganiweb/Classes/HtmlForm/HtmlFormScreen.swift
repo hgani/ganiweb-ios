@@ -1,11 +1,9 @@
-
 import Eureka
-import SVProgressHUD
 import GaniLib
 
 open class HtmlFormScreen: GFormScreen {
     public private(set) var htmlForm: HtmlForm!
-    public private(set) var section: Section!
+    private var section: Section!
     lazy fileprivate var refresher: GRefreshControl = {
         return GRefreshControl().onValueChanged {
             self.onRefresh()
@@ -31,21 +29,22 @@ open class HtmlFormScreen: GFormScreen {
     }
     
     private func setupForm() {
-        self.tableView?.contentInset = UIEdgeInsetsMake(-16, 0, -16, 0)  // Eureka-specific requirements
+        //self.tableView?.contentInset = UIEdgeInsetsMake(-16, 0, -16, 0)  // Eureka-specific requirements
         self.section = Section()
         
-        // section.header!.height = {0}
-        // section.header = headerForm(title: "HEADER", height: 150)
-        
         form += [section]
+        
+        setupHeader(height: 0) { _ in
+            // This is just to remove the gap at the top
+        }
         
         self.htmlForm = HtmlForm(form: form, onSubmitSucceeded: { result in
             if !self.onSubmitted(result: result) {
                 if let message = result["message"].string {
-                    SVProgressHUD.showError(withStatus: message)
+                    self.indicator.show(error: message)
                 }
                 else if let message = result["error"].string {  // Devise uses "error" key
-                    SVProgressHUD.showError(withStatus: message)
+                    self.indicator.show(error: message)
                 }
             }
         })
@@ -61,31 +60,23 @@ open class HtmlFormScreen: GFormScreen {
         }
     }
     
-//    
-//    func headerForm(title: String?, height: CGFloat) -> HeaderFooterView<UIView> {
-//        var header = HeaderFooterView<UIView>(.class)
-//        header.height = {height}
-//        header.onSetupView = { view, section in
-//            view.backgroundColor = .white
-//            
-//            let label = UILabel()
-//            label.text = title
-//            label.numberOfLines = 0
-//            label.textAlignment = .center
-//            
-//            view.addSubview(label)
-//            
-//            label.snp.makeConstraints { (make) -> Void in
-//                make.width.equalTo(view).offset(-20)
-//                make.height.equalTo(view)
-//                make.left.equalTo(10)
-//                make.right.equalTo(10)
-//            }
-//        }
-//        
-//        return header
-//    }
+    private func setupHeaderFooter(height: Int, populate: @escaping (GHeaderFooterView) -> Void) -> HeaderFooterView<GHeaderFooterView> {
+        var headerFooter = HeaderFooterView<GHeaderFooterView>(.class)
+        headerFooter.height = { self.htmlForm.rendered ? CGFloat(height) : 0 }
+        headerFooter.onSetupView = { view, section in
+            view.paddings(t: 15, l: 20, b: 15, r: 20).clearViews()
+            populate(view)
+        }
+        return headerFooter
+    }
     
+    public func setupHeader(height: Int, populate: @escaping (GHeaderFooterView) -> Void) {
+        section.header = setupHeaderFooter(height: height, populate: populate)
+    }
+    
+    public func setupFooter(height: Int, populate: @escaping (GHeaderFooterView) -> Void) {
+        section.footer = setupHeaderFooter(height: height, populate: populate)
+    }
     
     public func loadForm(path: String) {
         htmlForm.load(path, indicator: refresher, onSuccess: {

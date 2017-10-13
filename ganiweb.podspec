@@ -44,7 +44,8 @@ Simplify iOS development
 	
   s.dependency 'GaniLib'
 	s.dependency 'Kanna'
-  #s.dependency 'ImageRow', '~> 2.0'
-  s.dependency 'ImageRow'
   s.dependency 'Turbolinks'
+
+	# Optional. Define it in the project's Podfile, then set INCLUDE_IMAGEROW in "Other Swift Flags".
+  #s.dependency 'ImageRow'
 end
