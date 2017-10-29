@@ -22,7 +22,7 @@ public class HtmlForm {
         self.onSubmitSucceeded = onSubmitSucceeded
     }
     
-    static func preload(paths: [String]) {
+    public static func preload(paths: [String]) {
         DispatchQueue.global(qos: .background).async {
             for path in paths {
                 _ = Alamofire.request(GHttp.instance.host() + "/\(path)")

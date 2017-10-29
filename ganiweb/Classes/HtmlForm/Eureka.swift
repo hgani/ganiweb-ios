@@ -151,17 +151,18 @@ public final class AACCheckCell: Cell<Bool>, CellType {
     }
     
 }
+//
+//open class _AACCheckRow: Row<AACCheckCell> {
+//    
+//    required public init(tag: String?) {
+//        super.init(tag: tag)
+//        displayValueFor = nil
+//    }
+//}
+//
+//public final class AACCheckRow: _AACCheckRow, RowType {
+//    required public init(tag: String?) {
+//        super.init(tag: tag)
+//    }
+//}
 
-open class _AACCheckRow: Row<AACCheckCell> {
-    
-    required public init(tag: String?) {
-        super.init(tag: tag)
-        displayValueFor = nil
-    }
-}
-
-public final class AACCheckRow: _AACCheckRow, RowType {
-    required public init(tag: String?) {
-        super.init(tag: tag)
-    }
-}
