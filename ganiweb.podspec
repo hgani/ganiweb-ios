@@ -46,6 +46,15 @@ Simplify iOS development
 	s.dependency 'Kanna'
   s.dependency 'Turbolinks'
 
-	# Optional. Define it in the project's Podfile, then set INCLUDE_IMAGEROW in "Other Swift Flags".
-  #s.dependency 'ImageRow'
+  # http://www.dbotha.com/2014/12/04/optional-cocoapod-dependencies/
+  s.default_subspec = 'Core'
+
+  s.subspec 'Core' do |image|
+    image.xcconfig = { 'OTHER_SWIFT_FLAGS' => '' }
+  end
+
+  s.subspec 'Image' do |image|
+    image.xcconfig = { 'OTHER_SWIFT_FLAGS' => '-DINCLUDE_IMAGEROW' }
+    image.dependency 'ImageRow'
+  end
 end
