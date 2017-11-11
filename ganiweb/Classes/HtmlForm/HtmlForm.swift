@@ -160,14 +160,17 @@ public class HtmlForm {
         self.rendered = true
         self.section = form.allSections.last!
         self.document = doc
-        let formElement = doc.css("form").first
-        self.formAction = formElement?["action"]
-        if let inputs = formElement?.css("input, select, textarea") {
-            for input in inputs {
+        if let formElement = doc.css("form").first {
+            self.formAction = formElement["action"]
+//            if let inputs = formElement.css("input, select, textarea, button") {
+            for input in formElement.css("input, textarea, select, button") {
                 let name = input["name"] ?? ""
-                var label = input.parent?.at_css("label")?.text ?? ""
-            
+                let label = input.parent?.at_css("label")?.text ?? ""
+                
                 switch(input.tagName!) {
+                case "input":
+                    inputRow(from: input, name: name, label: label, formElement: formElement)
+                    break
                 case "textarea":
                     textAreaRow(input, name: name)
                     break
@@ -178,91 +181,10 @@ public class HtmlForm {
                     
                     pushRow(input, name: name, label: label, options: options)
                     break
-                case "input":
-                    switch(input["type"] ?? "") {
-                    case "text":
-                        label = input.parent?.parent?.at_css("label")?.text ?? ""
-                    
-                        if (input.className?.contains("date_picker"))! {
-                            dateRow(input, name: name, label: label)
-                        }
-                        else {
-                            if (input.className?.contains("datetime_picker"))! {
-                                dateTimeRow(input, name: name, label: label)
-                            }
-                            else {
-                                if (input.className?.contains("time_picker"))! {
-                                    timeRow(input, name: name, label: label)
-                                }
-                                else {
-                                    label = input.parent?.at_css("label")?.text ?? ""
-                                    textRow(input, name: name, label: label)
-                                }
-                            }
-                        }
-                        break
-                    case "email":
-                        emailRow(input, name: name, label: label)
-                        break
-                    case "password":
-                        passwordRow(input, name: name, label: label)
-                        break
-                    case "url":
-                        urlRow(input, name: name, label: label)
-                        break
-                    case "hidden":
-                        // NOTE: Not sure what this is for
-//                        let hiddenFields = formElement?.css("input[name=\(name)]")
-//                    
-//                        if hiddenFields?.count == 1 {
-//                            hiddenRow(input, name: name)
-//                        }
-                        hiddenRow(input, name: name)
-                        break
-                    case "radio":
-                        if (self.form.rowBy(tag: name) != nil) {
-                            continue
-                        }
-                    
-                        let options = formElement?.css("input[name=\(name)]").map({ (element) -> String in
-                            return element["value"] ?? ""
-                        }).filter { $0 != "" }
-                    
-                        pushRow(input, name: name, label: "", options: options!)
-                        break
-                    case "checkbox":
-                        if (self.form.rowBy(tag: name) != nil) {
-                            continue
-                        }
-                    
-                        if (input["name"]?.contains("[]"))! {
-                            let checkBoxes = formElement?.css("input[name=\(name)]")
-                            let options = checkBoxes?.map({ (element) -> String in
-                                return element["value"] ?? ""
-                            }).filter { $0 != "" }
-                        
-                            multipleSelectorRow(input, name: name, label: "", options: options!)
-                        }
-                        else {
-                            label = (input.parent?.text)!
-                            switchRow(input, name: name, label: label)
-                        }
-                        break
-                    case "tel":
-                        phoneRow(input, name: name, label: label)
-                        break
-                    case "file":
-                        imageRow(input, name: name, label: label)
-                    case "submit":
-                        submitButtonRow(input, name: name)
-                        break
-                    case "data_list":
-                        let options = input.parent?.css("option").map({ (element) -> String in
-                            return element["value"] ?? ""
-                        })
-                        dataListRow(input, name: name, label: label, options: options!)
-                        break
-                    default: break
+                case "button":
+                    let type = input["type"]
+                    if type == nil || type == "submit" {
+                        submitButtonRow(input, name: name, text: input.text ?? "", action: input["formaction"])
                     }
                     break
                 default: break
@@ -270,7 +192,92 @@ public class HtmlForm {
             }
         }
         else {
-            SVProgressHUD.showInfo(withStatus: "Form changed, pull to refresh")
+            SVProgressHUD.showInfo(withStatus: "Can't find form data")
+        }
+//        }
+    }
+    
+    private func inputRow(from input: XMLElement, name: String, label: String, formElement: XMLElement) {
+        switch(input["type"] ?? "") {
+        case "text":
+//            let label = input.parent?.parent?.at_css("label")?.text ?? ""
+            
+            if (input.className?.contains("date_picker"))! {
+                dateRow(input, name: name, label: label)
+            }
+            else {
+                if (input.className?.contains("datetime_picker"))! {
+                    dateTimeRow(input, name: name, label: label)
+                }
+                else {
+                    if (input.className?.contains("time_picker"))! {
+                        timeRow(input, name: name, label: label)
+                    }
+                    else {
+//                        label = input.parent?.at_css("label")?.text ?? ""
+                        textRow(input, name: name, label: label)
+                    }
+                }
+            }
+            break
+        case "email":
+            emailRow(input, name: name, label: label)
+            break
+        case "password":
+            passwordRow(input, name: name, label: label)
+            break
+        case "url":
+            urlRow(input, name: name, label: label)
+            break
+        case "hidden":
+            hiddenRow(input, name: name)
+            break
+        case "radio":
+            if (self.form.rowBy(tag: name) != nil) {
+//                continue
+                return
+            }
+            
+            let options = formElement.css("input[name=\(name)]").map({ (element) -> String in
+                return element["value"] ?? ""
+            }).filter { $0 != "" }
+            
+            pushRow(input, name: name, label: "", options: options)
+            break
+        case "checkbox":
+            if (self.form.rowBy(tag: name) != nil) {
+//                continue
+                return
+            }
+            
+            if (input["name"]?.contains("[]"))! {
+                let checkBoxes = formElement.css("input[name=\(name)]")
+                let options = checkBoxes.map({ (element) -> String in
+                    return element["value"] ?? ""
+                }).filter { $0 != "" }
+                
+                multipleSelectorRow(input, name: name, label: "", options: options)
+            }
+            else {
+//                label = (input.parent?.text)!
+                switchRow(input, name: name, label: label)
+            }
+            break
+        case "tel":
+            phoneRow(input, name: name, label: label)
+            break
+        case "file":
+            imageRow(input, name: name, label: label)
+        case "submit":
+            submitButtonRow(input, name: name, text: input["value"] ?? "", action: nil)
+            break
+        case "data_list":
+            let options = input.parent?.css("option").map({ (element) -> String in
+                return element["value"] ?? ""
+            })
+            dataListRow(input, name: name, label: label, options: options!)
+            break
+        default: break
         }
     }
     
@@ -291,18 +298,61 @@ public class HtmlForm {
         section.insert(row, at: at)
     }
     
-    // TODO: Apply every row type to use this.
     private func insertOrReplaceRow(_ row: BaseRow, tag: String) {
-        //if let inputRow: HTMLTextAreaRow = form.rowBy(tag: name) {
+        Log.t("SWITCH1: \(tag)")
         if let inputRow = form.rowBy(tag: tag) {
+            
+            Log.t("SWITCH2")
             if (row as? HtmlFormRow)?.html != (inputRow as? HtmlFormRow)?.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: row, at: index)
+                
+                Log.t("SWITCH3")
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: row, at: index)
+                
+                // In the case of hidden field, index will be nil if the field was previously also a hidden field.
+                if let index = section.index(of: inputRow) {
+                    replaceSection(row: row, at: index)
+                }
+                else {
+                    let destination = inputRow as! HTMLTextRow
+                    let source = row as! HTMLTextRow
+                    destination.html  = source.html
+                    destination.value = source.value
+                    destination.updateCell()
+                }
             }
         }
         else {
+            Log.t("SWITCH4")
             section <<< row
+            Log.t("SWITCH5")
         }
+    }
+    
+    private func hiddenRow(_ input: XMLElement, name: String) {
+        let hiddenRow = HTMLTextRow(name) { row in
+            row.html   = input.toHTML
+            row.value  = input["value"] ?? ""
+            row.hidden = true
+        }
+        insertOrReplaceRow(hiddenRow, tag: name)
+        
+        //        if let inputRow: HTMLTextRow = form.rowBy(tag: name) {
+        //            if input.toHTML != inputRow.html! {
+        //                // Index will be nil if the field was previously also a hidden field.
+        //                if let index = section.index(of: inputRow) {
+        //                    replaceSection(row: hiddenRow, at: index)
+        //                }
+        //                else {
+        //                    inputRow.html  = hiddenRow.html
+        //                    inputRow.value = hiddenRow.value
+        //                    inputRow.updateCell()
+        //                }
+        //            }
+        //        }
+        //        else {
+        //            section <<< hiddenRow
+        //        }
     }
     
     private func textAreaRow(_ input: XMLElement, name: String) {
@@ -337,16 +387,16 @@ public class HtmlForm {
             row.html  = input.toHTML
             row.title = label
         }
-        
-        if let inputRow: HTMLDateTimeRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: dateRow, at: index)
-            }
-        }
-        else {
-            section <<< dateRow
-        }
+        insertOrReplaceRow(dateRow, tag: name)
+//        if let inputRow: HTMLDateTimeRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: dateRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< dateRow
+//        }
     }
     
     private func dateRow(_ input: XMLElement, name: String, label: String) {
@@ -357,16 +407,17 @@ public class HtmlForm {
             row.html  = input.toHTML
             row.title = label
         }
+        insertOrReplaceRow(dateRow, tag: name)
         
-        if let inputRow: HTMLDateRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: dateRow, at: index)
-            }
-        }
-        else {
-            section <<< dateRow
-        }
+//        if let inputRow: HTMLDateRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: dateRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< dateRow
+//        }
     }
     
     private func timeRow(_ input: XMLElement, name: String, label: String) {
@@ -377,16 +428,17 @@ public class HtmlForm {
             row.html  = input.toHTML
             row.title = label
         }
+        insertOrReplaceRow(timeRow, tag: name)
         
-        if let inputRow: HTMLTimeRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: timeRow, at: index)
-            }
-        }
-        else {
-            section <<< timeRow
-        }
+//        if let inputRow: HTMLTimeRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: timeRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< timeRow
+//        }
     }
     
     private func pushRow(_ input: XMLElement, name: String, label: String, options: [String]) {
@@ -396,16 +448,17 @@ public class HtmlForm {
             row.options = options
             row.value   = options.first
         }
+        insertOrReplaceRow(pushRow, tag: name)
         
-        if let inputRow: HTMLPushRow<String> = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: pushRow, at: index)
-            }
-        }
-        else {
-            section <<< pushRow
-        }
+//        if let inputRow: HTMLPushRow<String> = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: pushRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< pushRow
+//        }
     }
     
     private func pushRow(_ input: XMLElement, name: String, label: String, options: [KeyValue]) {
@@ -415,16 +468,17 @@ public class HtmlForm {
             row.options = options
             row.value   = options.first
         }
+        insertOrReplaceRow(pushRow, tag: name)
         
-        if let inputRow: HTMLPushRow<KeyValue> = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: pushRow, at: index)
-            }
-        }
-        else {
-            section <<< pushRow
-        }
+//        if let inputRow: HTMLPushRow<KeyValue> = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: pushRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< pushRow
+//        }
     }
     
     private func dataListRow(_ input: XMLElement, name: String, label: String, options: [String]) {
@@ -434,16 +488,17 @@ public class HtmlForm {
             row.options = options
             row.value   = options.first
         }
+        insertOrReplaceRow(dataListRow, tag: name)
         
-        if let inputRow: HtmlDataListRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: dataListRow, at: index)
-            }
-        }
-        else {
-            section <<< dataListRow
-        }
+//        if let inputRow: HtmlDataListRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: dataListRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< dataListRow
+//        }
     }
     
     private func emailRow(_ input: XMLElement, name: String, label: String) {
@@ -452,16 +507,17 @@ public class HtmlForm {
             row.title = label
             row.value = input["value"] ?? ""
         }
+        insertOrReplaceRow(emailRow, tag: name)
         
-        if let inputRow: HTMLEmailRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: emailRow, at: index)
-            }
-        }
-        else {
-            section <<< emailRow
-        }
+//        if let inputRow: HTMLEmailRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: emailRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< emailRow
+//        }
     }
     
     private func passwordRow(_ input: XMLElement, name: String, label: String) {
@@ -470,16 +526,17 @@ public class HtmlForm {
             row.title = label
             row.value = input["value"] ?? ""
         }
+        insertOrReplaceRow(passwordRow, tag: name)
         
-        if let inputRow: HTMLPasswordRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: passwordRow, at: index)
-            }
-        }
-        else {
-            section <<< passwordRow
-        }
+//        if let inputRow: HTMLPasswordRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: passwordRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< passwordRow
+//        }
     }
     
     private func urlRow(_ input: XMLElement, name: String, label: String) {
@@ -488,41 +545,17 @@ public class HtmlForm {
             row.title = label
             row.value = URL(string: input["value"] ?? "")
         }
+        insertOrReplaceRow(urlRow, tag: name)
         
-        if let inputRow: HTMLURLRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: urlRow, at: index)
-            }
-        }
-        else {
-            section <<< urlRow
-        }
-    }
-    
-    private func hiddenRow(_ input: XMLElement, name: String) {
-        let hiddenRow = HTMLTextRow(name) { row in
-            row.html   = input.toHTML
-            row.value  = input["value"] ?? ""
-            row.hidden = true
-        }
-        
-        if let inputRow: HTMLTextRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                // Index will be nil if the field was previously also a hidden field.
-                if let index = section.index(of: inputRow) {
-                    replaceSection(row: hiddenRow, at: index)
-                }
-                else {
-                    inputRow.html  = hiddenRow.html
-                    inputRow.value = hiddenRow.value
-                    inputRow.updateCell()
-                }
-            }
-        }
-        else {
-            section <<< hiddenRow
-        }
+//        if let inputRow: HTMLURLRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: urlRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< urlRow
+//        }
     }
     
     private func multipleSelectorRow(_ input: XMLElement,
@@ -534,16 +567,17 @@ public class HtmlForm {
             row.title   = label
             row.options = options
         }
+        insertOrReplaceRow(multipleSelectorRow, tag: name)
         
-        if let inputRow: HTMLMultipleSelectorRow<String> = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: multipleSelectorRow, at: index)
-            }
-        }
-        else {
-            section <<< multipleSelectorRow
-        }
+//        if let inputRow: HTMLMultipleSelectorRow<String> = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: multipleSelectorRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< multipleSelectorRow
+//        }
     }
     
     private func switchRow(_ input: XMLElement, name: String, label: String) {
@@ -555,16 +589,18 @@ public class HtmlForm {
             cell.textLabel?.numberOfLines = 0
             cell.textLabel?.font = cell.textLabel?.font.withSize(14)
         }
+        insertOrReplaceRow(switchRow, tag: name)
         
-        if let inputRow: HTMLSwitchRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: switchRow, at: index)
-            }
-        }
-        else {
-            section <<< switchRow
-        }
+//        if let inputRow: HTMLSwitchRow = form.rowBy(tag: name) {
+//            Log.t("SWITCH1")
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: switchRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< switchRow
+//        }
     }
     
     private func phoneRow(_ input: XMLElement, name: String, label: String) {
@@ -573,16 +609,17 @@ public class HtmlForm {
             row.title = label
             row.value = input["value"] ?? ""
         }
+        insertOrReplaceRow(phoneRow, tag: name)
         
-        if let inputRow: HTMLPhoneRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: phoneRow, at: index)
-            }
-        }
-        else {
-            section <<< phoneRow
-        }
+//        if let inputRow: HTMLPhoneRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: phoneRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< phoneRow
+//        }
     }
     
     private func imageRow(_ input: XMLElement, name: String, label: String) {
@@ -594,41 +631,34 @@ public class HtmlForm {
             row.sourceTypes = [.PhotoLibrary, .Camera, .SavedPhotosAlbum]
             row.clearAction = .yes(style: UIAlertActionStyle.destructive)
         }
-        
-        if let inputRow: HtmlImageRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: imageRow, at: index)
-            }
-        }
-        else {
-            section <<< imageRow
-        }
+        insertOrReplaceRow(imageRow, tag: name)
+
+//        if let inputRow: HtmlImageRow = form.rowBy(tag: name) {
+//            if input.toHTML != inputRow.html! {
+//                let index = section.index(of: inputRow)
+//                replaceSection(row: imageRow, at: index)
+//            }
+//        }
+//        else {
+//            section <<< imageRow
+//        }
         
         #endif
     }
     
-    private func submitButtonRow(_ input: XMLElement, name: String) {
+    private func submitButtonRow(_ input: XMLElement, name: String, text: String, action: String?) {
         let buttonRow = HTMLButtonRow(name) { row in
-            row.html    = input.toHTML
-            row.title   = input["value"] ?? ""
-        }.onCellSelection { (cell, row) in
-            self.submit()
+            row.html = input.toHTML
+            row.title = text
+//            row.title   = input["value"] ?? ""
+        }.onCellSelection { [unowned self] (cell, row) in
+            self.submit(action: action)
         }
-        
-        if let inputRow: HTMLButtonRow = form.rowBy(tag: name) {
-            if input.toHTML != inputRow.html! {
-                let index = section.index(of: inputRow)
-                replaceSection(row: buttonRow, at: index)
-            }
-        }
-        else {
-            section <<< buttonRow
-        }
+        insertOrReplaceRow(buttonRow, tag: name)
     }
     
-    private func submit() {
-        if let path = formAction {
+    private func submit(action: String?) {
+        if let path = action ?? formAction {
             SVProgressHUD.show()
             
             _ = Rest.post(path: "\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
