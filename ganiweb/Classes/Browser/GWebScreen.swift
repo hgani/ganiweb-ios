@@ -1,6 +1,6 @@
 import GaniLib
 
-open class WebScreen: GScreen {
+open class GWebScreen: GScreen {
     private let webView = GWebView()
     private let url: URL
     
@@ -14,9 +14,12 @@ open class WebScreen: GScreen {
         fatalError("Unsupported operation")
     }
     
-    override open func viewDidLoad() {
-        super.viewDidLoad()
-        
+//    override open func viewDidLoad() {
+//        super.viewDidLoad()
+//        
+//    }
+    
+    open override func onRefresh() {
         _ = webView.load(url: url)
     }
 }

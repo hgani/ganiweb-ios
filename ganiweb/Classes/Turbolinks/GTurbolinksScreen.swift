@@ -2,7 +2,7 @@ import UIKit
 import Turbolinks
 import GaniLib
 
-open class TurbolinksScreen: Turbolinks.VisitableViewController {
+open class GTurbolinksScreen: Turbolinks.VisitableViewController {
     public var helper : ScreenHelper!
     public var nav : NavHelper!
     
@@ -35,7 +35,7 @@ open class TurbolinksScreen: Turbolinks.VisitableViewController {
 //    }
 }
 
-extension TurbolinksScreen: ScreenProtocol {
+extension GTurbolinksScreen: ScreenProtocol {
     public var controller: UIViewController {
         get {
             return self
