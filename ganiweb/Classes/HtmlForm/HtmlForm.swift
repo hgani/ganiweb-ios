@@ -100,7 +100,7 @@ public class HtmlForm {
         let csrfToken = document.at_css("meta[name='csrf-token']")?["content"]
         return [
             "Cookie": HtmlForm.getCookie(),
-            "X-CSRF-Token": csrfToken!,
+            "X-CSRF-Token": csrfToken ?? "",
         ]
     }
     
@@ -109,7 +109,7 @@ public class HtmlForm {
         if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
             let htmlString = String(data: cachedResponse.data, encoding: .utf8)
             let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
-            processDocument(doc: docCached!)
+            process(doc: docCached!, path: path)
         }
     }
     
@@ -118,7 +118,7 @@ public class HtmlForm {
         
         Http.get(path: path).execute(indicator: indicator) { content in
             if let doc = Kanna.HTML(html: content, encoding: .utf8) {
-                self.processDocument(doc: doc)
+                self.process(doc: doc, path: path)
                 onSuccess?()
                 return nil
             }
@@ -156,12 +156,16 @@ public class HtmlForm {
 //        tableView.reloadData()
 //    }
     
-    private func processDocument(doc: HTMLDocument) {
+    private func process(doc: HTMLDocument, path: String) {
         self.rendered = true
         self.section = form.allSections.last!
         self.document = doc
         if let formElement = doc.css("form").first {
             self.formAction = formElement["action"]
+            if let action = formAction, action.count <= 0 {
+                self.formAction = path
+            }
+            
 //            if let inputs = formElement.css("input, select, textarea, button") {
             for input in formElement.css("input, textarea, select, button") {
                 let name = input["name"] ?? ""
@@ -299,13 +303,8 @@ public class HtmlForm {
     }
     
     private func insertOrReplaceRow(_ row: BaseRow, tag: String) {
-        Log.t("SWITCH1: \(tag)")
         if let inputRow = form.rowBy(tag: tag) {
-            
-            Log.t("SWITCH2")
             if (row as? HtmlFormRow)?.html != (inputRow as? HtmlFormRow)?.html! {
-                
-                Log.t("SWITCH3")
 //                let index = section.index(of: inputRow)
 //                replaceSection(row: row, at: index)
                 
@@ -323,9 +322,7 @@ public class HtmlForm {
             }
         }
         else {
-            Log.t("SWITCH4")
             section <<< row
-            Log.t("SWITCH5")
         }
     }
     
@@ -660,7 +657,7 @@ public class HtmlForm {
     private func submit(action: String?) {
         if let path = action ?? formAction {
             SVProgressHUD.show()
-            
+
             _ = Rest.post(path: "\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
                 SVProgressHUD.dismiss()
                 self.onSubmitSucceeded(json)
