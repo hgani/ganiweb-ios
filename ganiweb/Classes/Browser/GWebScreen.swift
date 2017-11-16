@@ -20,11 +20,11 @@ open class GWebScreen: GScreen {
         super.viewDidLoad()
         
         if autoLoad {
-            _ = webView.load(url: url)
+            onRefresh()
         }
     }
     
     open override func onRefresh() {
-        webView.reload()
+        _ = webView.load(url: url)
     }
 }
