@@ -109,7 +109,7 @@ public class HtmlForm {
         if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
             let htmlString = String(data: cachedResponse.data, encoding: .utf8)
             let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
-            process(doc: docCached!, path: path)
+            processWithoutAnimation(doc: docCached!, path: path)
         }
     }
     
@@ -118,7 +118,7 @@ public class HtmlForm {
         
         Http.get(path: path).execute(indicator: indicator) { content in
             if let doc = Kanna.HTML(html: content, encoding: .utf8) {
-                self.process(doc: doc, path: path)
+                self.processWithoutAnimation(doc: doc, path: path)
                 onSuccess?()
                 return nil
             }
@@ -146,15 +146,39 @@ public class HtmlForm {
 //        let section = form.allSections.last
 //        section?.removeAll()
 //        
-//        let urlRequest = URLRequest(url: URL(string: formURL)!)
-//        if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
-//            let htmlString = String(data: cachedResponse.data, encoding: .utf8)
-//            let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
-//            processDocument(doc: docCached!)
-//        }
+//        populateFromCache()
 //        
-//        tableView.reloadData()
+////        let urlRequest = URLRequest(url: URL(string: formURL)!)
+////        if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
+////            let htmlString = String(data: cachedResponse.data, encoding: .utf8)
+////            let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
+////            processDocument(doc: docCached!)
+////        }
+//        
+////        tableView.reloadData()
 //    }
+    
+    private func deleteObsoleteRows(inputs: Kanna.XPathObject) {
+        var names = [String]()
+        for input in inputs {
+            if let name = input["name"] {
+                names.append(name)
+            }
+        }
+        
+        for row in form.rows {
+            if let tag = row.tag, !names.contains(tag), let index = section.index(of: row) {
+                section.remove(at: index)
+            }
+        }
+    }
+    
+    private func processWithoutAnimation(doc: HTMLDocument, path: String) {
+        // Avoid jumpiness as fields get removed and inserted.
+        UIView.performWithoutAnimation {
+            self.process(doc: doc, path: path)
+        }
+    }
     
     private func process(doc: HTMLDocument, path: String) {
         self.rendered = true
@@ -166,8 +190,11 @@ public class HtmlForm {
                 self.formAction = path
             }
             
-//            if let inputs = formElement.css("input, select, textarea, button") {
-            for input in formElement.css("input, textarea, select, button") {
+            let inputs = formElement.css("input, textarea, select, button")
+
+            deleteObsoleteRows(inputs: inputs)
+            
+            for input in inputs {
                 let name = input["name"] ?? ""
                 let label = input.parent?.at_css("label")?.text ?? ""
                 
@@ -201,28 +228,44 @@ public class HtmlForm {
 //        }
     }
     
+    private func jsDateTimeLabel(from input: XMLElement) -> String {
+        return input.parent?.parent?.at_css("label")?.text ?? ""
+    }
+    
+    // TODO: Refactor to support html5 date/datetime field
     private func inputRow(from input: XMLElement, name: String, label: String, formElement: XMLElement) {
         switch(input["type"] ?? "") {
         case "text":
 //            let label = input.parent?.parent?.at_css("label")?.text ?? ""
             
             if (input.className?.contains("date_picker"))! {
-                dateRow(input, name: name, label: label)
+                dateRow(input, name: name, label: jsDateTimeLabel(from: input))
+            }
+            else if (input.className?.contains("datetime_picker"))! {
+                dateTimeRow(input, name: name, label: jsDateTimeLabel(from: input))
+            }
+            else if (input.className?.contains("time_picker"))! {
+                timeRow(input, name: name, label: jsDateTimeLabel(from: input))
             }
             else {
-                if (input.className?.contains("datetime_picker"))! {
-                    dateTimeRow(input, name: name, label: label)
-                }
-                else {
-                    if (input.className?.contains("time_picker"))! {
-                        timeRow(input, name: name, label: label)
-                    }
-                    else {
-//                        label = input.parent?.at_css("label")?.text ?? ""
-                        textRow(input, name: name, label: label)
-                    }
-                }
+                //                        label = input.parent?.at_css("label")?.text ?? ""
+                textRow(input, name: name, label: label)
             }
+            
+//            else {
+//                if (input.className?.contains("datetime_picker"))! {
+//                    dateTimeRow(input, name: name, label: label)
+//                }
+//                else {
+//                    if (input.className?.contains("time_picker"))! {
+//                        timeRow(input, name: name, label: label)
+//                    }
+//                    else {
+////                        label = input.parent?.at_css("label")?.text ?? ""
+//                        textRow(input, name: name, label: label)
+//                    }
+//                }
+//            }
             break
         case "email":
             emailRow(input, name: name, label: label)
@@ -318,6 +361,13 @@ public class HtmlForm {
                     destination.html  = source.html
                     destination.value = source.value
                     destination.updateCell()
+                }
+            }
+            else {
+                if let index = section.index(of: inputRow) {
+                    // Reposition
+                    section.remove(at: index)
+                    section.append(inputRow)
                 }
             }
         }

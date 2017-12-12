@@ -1,7 +1,7 @@
 import Eureka
 import GaniLib
 
-open class HtmlFormScreen: GFormScreen {
+open class GHtmlFormScreen: GFormScreen {
     public private(set) var htmlForm: HtmlForm!
     private var section: Section!
     lazy fileprivate var refresher: GRefreshControl = {
@@ -9,7 +9,16 @@ open class HtmlFormScreen: GFormScreen {
             self.onRefresh()
         }
     }()
-
+    
+    private var autoRefresh = false
+    
+    // This is especially important for detecting if the user is still logged in everytime the form screen
+    // is opened.
+    public func refreshOnAppear() -> Self {
+        self.autoRefresh = true
+        return self
+    }
+    
     open override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -28,6 +37,13 @@ open class HtmlFormScreen: GFormScreen {
         setupForm()
     }
     
+    open override func viewWillAppear(_ animated: Bool) {
+        if autoRefresh {
+            onRefresh()
+        }
+        super.viewWillAppear(animated)
+    }
+    
     private func setupForm() {
         //self.tableView?.contentInset = UIEdgeInsetsMake(-16, 0, -16, 0)  // Eureka-specific requirements
         self.section = Section()
@@ -39,7 +55,11 @@ open class HtmlFormScreen: GFormScreen {
         }
         
         self.htmlForm = HtmlForm(form: form, onSubmitSucceeded: { result in
-            if !self.onSubmitted(result: result) {
+            if self.onSubmitted(result: result) {
+                // TODO: Ideally we should only reset the values, not remove the fields.
+                self.form.allSections.last?.removeAll()
+            }
+            else {
                 if let message = result["message"].string {
                     self.indicator.show(error: message)
                 }
