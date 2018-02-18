@@ -126,7 +126,7 @@ public class HtmlForm {
         }
     }
     
-    public func unwrappedValues() -> GParams {
+    private func unwrappedValues() -> GParams {
         let wrapped = form.values(includeHidden: true)
         var unwrapped = GParams()
                 
@@ -704,14 +704,33 @@ public class HtmlForm {
         insertOrReplaceRow(buttonRow, tag: name)
     }
     
+    private func isMultipart(params: GParams) -> Bool {
+        for (_, value) in params {
+            if value is UIImage {
+                return true
+            }
+        }
+        return false
+    }
+    
     private func submit(action: String?) {
         if let path = action ?? formAction {
             SVProgressHUD.show()
-
-            _ = Rest.post(path: "\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
-                SVProgressHUD.dismiss()
-                self.onSubmitSucceeded(json)
-                return true
+            
+            let params = unwrappedValues()
+            if isMultipart(params: params) {
+                _ = Rest.multipart(path: "\(path).json", params: params, headers: headers()).execute { json in
+                    SVProgressHUD.dismiss()
+                    self.onSubmitSucceeded(json)
+                    return true
+                }
+            }
+            else {
+                _ = Rest.post(path: "\(path).json", params: unwrappedValues(), headers: headers()).execute { json in
+                    SVProgressHUD.dismiss()
+                    self.onSubmitSucceeded(json)
+                    return true
+                }
             }
         }
     }
