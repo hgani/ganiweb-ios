@@ -4,11 +4,11 @@ import GaniLib
 open class GHtmlFormScreen: GFormScreen {
     public private(set) var htmlForm: HtmlForm!
     private var section: Section!
-    lazy fileprivate var refresher: GRefreshControl = {
-        return GRefreshControl().onValueChanged {
-            self.onRefresh()
-        }
-    }()
+//    lazy fileprivate var refresher: GRefreshControl = {
+//        return GRefreshControl().onValueChanged {
+//            self.onRefresh()
+//        }
+//    }()
     
     private var autoRefresh = false
     
@@ -33,7 +33,7 @@ open class GHtmlFormScreen: GFormScreen {
             })
         })
         
-        appendRefreshControl()
+//        appendRefreshControl()
         setupForm()
     }
     
@@ -69,16 +69,16 @@ open class GHtmlFormScreen: GFormScreen {
             }
         })
     }
-    
-    private func appendRefreshControl() {
-        tableView?.addSubview(refresher)
-        
-        // Eureka-specific requirements
-        refresher.snp.makeConstraints { (make) -> Void in
-            make.top.equalTo(4)
-            make.centerX.equalTo(tableView!)
-        }
-    }
+//
+//    private func appendRefreshControl() {
+//        tableView?.addSubview(refresher)
+//
+//        // Eureka-specific requirements
+//        refresher.snp.makeConstraints { (make) -> Void in
+//            make.top.equalTo(4)
+//            make.centerX.equalTo(tableView!)
+//        }
+//    }
     
     private func setupHeaderFooter(height: Int, populate: @escaping (GHeaderFooterView) -> Void) -> HeaderFooterView<GHeaderFooterView> {
         var headerFooter = HeaderFooterView<GHeaderFooterView>(.class)
