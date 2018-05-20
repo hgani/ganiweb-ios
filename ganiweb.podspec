@@ -43,7 +43,7 @@ Simplify iOS development
   # s.frameworks = 'UIKit', 'MapKit'
 	
   s.dependency 'GaniLib'
-	s.dependency 'Kanna'
+  s.dependency 'Kanna', '~> 4.0.0'
   s.dependency 'Turbolinks'
 
   # http://www.dbotha.com/2014/12/04/optional-cocoapod-dependencies/

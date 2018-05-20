@@ -107,9 +107,11 @@ public class HtmlForm {
     private func populateFromCache(path: String) {
         let urlRequest = URLRequest(url: URL(string: "\(GHttp.instance.host())\(path)")!)
         if let cachedResponse = URLCache.shared.cachedResponse(for: urlRequest) {
-            let htmlString = String(data: cachedResponse.data, encoding: .utf8)
-            let docCached = Kanna.HTML(html: htmlString!, encoding: .utf8)
-            processWithoutAnimation(doc: docCached!, path: path)
+            if let htmlString = String(data: cachedResponse.data, encoding: .utf8) {
+                if let cachedDoc = try? Kanna.HTML(html: htmlString, encoding: .utf8) {
+                    processWithoutAnimation(doc: cachedDoc, path: path)
+                }
+            }
         }
     }
     
@@ -117,7 +119,7 @@ public class HtmlForm {
         populateFromCache(path: path)
         
         Http.get(path: path).execute(indicator: indicator) { content in
-            if let doc = Kanna.HTML(html: content, encoding: .utf8) {
+            if let doc = try? Kanna.HTML(html: content, encoding: .utf8) {
                 self.processWithoutAnimation(doc: doc, path: path)
                 onSuccess?()
                 return nil
